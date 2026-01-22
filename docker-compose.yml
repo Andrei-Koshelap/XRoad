@@ -15,7 +15,9 @@ services:
     environment:
       XROAD_TOKEN_PIN: 123456xrd!
     ports:
-      - "4000:4000"   # Central Server UI: https://localhost:4000
+      - "4000:4000"   # UI
+      - "80:80"       # internal/external configuration (HTTP)
+      - "443:443"     # internal/external configuration (HTTPS)
     volumes:
       - cs-db-volume:/var/lib/postgresql/16/main
       - cs-conf-volume:/etc/xroad
@@ -131,7 +133,6 @@ services:
     build: ./adapter
     container_name: adapter
     environment:
-      # внутри docker network ss2 доступен по имени ss2 и порту 8080
       XROAD_SS_URL: http://ss2:8080
 
       # identificator example (need to match exactly with

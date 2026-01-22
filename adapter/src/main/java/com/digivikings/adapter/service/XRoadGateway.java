@@ -1,4 +1,4 @@
-package com.digivikings.adapter;
+package com.digivikings.adapter.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,8 +18,8 @@ public class XRoadGateway {
     @Value("${xroad.service}") private String xRoadService;
 
     public Mono<ResponseEntity<String>> getParcel(String cadastralId, String correlationId) {
-        //  путь до REST-service через SS зависит от того,
-        // как ты зарегистрируешь service description в SS.
+        // The path to the REST service via SS depends on how you register
+        // the service description in SS.
         // "xroadPath".
         String xroadPath = "/r1/" + "cadastre/getParcel/v1"; // example path
 
