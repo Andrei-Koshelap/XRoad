@@ -1,3 +1,5 @@
 spring:
   application:
     name: cadastre-rest
+  server:
+    port: 9000

@@ -1,3 +1,10 @@
+networks:
+  xroad-network:
+    driver: bridge
+  bknet:
+    driver: bridge
+    name: ruuter
+
 services:
   # -------------------------
   # X-Road local test env (NIIS recommended)
@@ -127,8 +134,8 @@ services:
       # внутри docker network ss2 доступен по имени ss2 и порту 8080
       XROAD_SS_URL: http://ss2:8080
 
-      # пример идентификаторов (ты потом синхронизируешь их с тем,
-      # что зарегистрируешь в X-Road)
+      # identificator example (need to match exactly with
+      # registered in X-Road)
       XROAD_CLIENT: DEV/ORG/BKTT/burokratt
       XROAD_SERVICE: DEV/ORG/CAD/cadastre/getParcel/v1
     depends_on:
@@ -141,7 +148,7 @@ services:
       - xroad-network
 
   ruuter:
-    image: ruuter
+    build: ./Ruuter
     container_name: ruuter
     volumes:
       - ./dsl:/dsl
@@ -149,7 +156,7 @@ services:
       - adapter
       - postgres
     ports:
-      - "5000:3000"   # чтобы не конфликтовать с ss3 UI (3000)
+      - "5000:3000"   #  ss3 UI (3000)
     networks:
       - bknet
 
@@ -178,3 +185,6 @@ volumes:
   ss3-db-volume:
     name: ss3-db-data
   ss3-conf-volume:
+    name: ss3-conf-data
+  ss3-archive-volume:
+    name: ss3-archive-data

@@ -1,3 +1,21 @@
 spring:
   application:
     name: adapter
+  datasource:
+    url: jdbc:postgresql://postgres:5432/bk
+    username: bk
+    password: pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate.jdbc.time_zone: UTC
+
+server:
+  port: 7000
+
+xroad:
+  ss-url: ${XROAD_SS_URL:http://ss2:8080}
+  client: ${XROAD_CLIENT:DEV/ORG/BKTT/burokratt}
+  service: ${XROAD_SERVICE:DEV/ORG/CAD/cadastre/getParcel/v1}
