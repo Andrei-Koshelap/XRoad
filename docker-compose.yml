@@ -1,0 +1,180 @@
+services:
+  # -------------------------
+  # X-Road local test env (NIIS recommended)
+  # -------------------------
+  cs:
+    image: niis/xroad-central-server:noble-7.7.0
+    container_name: cs
+    environment:
+      XROAD_TOKEN_PIN: 123456xrd!
+    ports:
+      - "4000:4000"   # Central Server UI: https://localhost:4000
+    volumes:
+      - cs-db-volume:/var/lib/postgresql/16/main
+      - cs-conf-volume:/etc/xroad
+    networks:
+      - xroad-network
+
+  ca:
+    image: ghcr.io/nordic-institute/xrddev-testca:latest
+    container_name: ca
+    ports:
+      - "8888:8888"   # Test CA UI: https://localhost:8888/testca/
+    volumes:
+      - ca-volume:/home/ca
+    networks:
+      - xroad-network
+
+  # Management Security Server
+  ss1:
+    image: niis/xroad-security-server-sidecar:7.7.0
+    container_name: ss1
+    ports:
+      - "1000:4000"   # SS1 Admin UI: https://localhost:1000
+      - "1080:8080"   # SS1 Request interface (HTTP) for IS
+      - "1443:8443"   # SS1 Request interface (HTTPS) for IS
+    environment:
+      XROAD_TOKEN_PIN: 123456xrd!
+      XROAD_ADMIN_USER: xrd
+      XROAD_ADMIN_PASSWORD: secret
+      XROAD_LOG_LEVEL: INFO
+    volumes:
+      - ss1-db-volume:/var/lib/postgresql/16/main
+      - ss1-conf-volume:/etc/xroad
+      - ss1-archive-volume:/var/lib/xroad
+    networks:
+      - xroad-network
+    depends_on:
+      - cs
+      - ca
+
+  # Consumer Security Server
+  ss2:
+    image: niis/xroad-security-server-sidecar:7.7.0
+    container_name: ss2
+    ports:
+      - "2000:4000"   # SS2 Admin UI: https://localhost:2000
+      - "2080:8080"   # SS2 Request interface (HTTP) for IS
+      - "2443:8443"   # SS2 Request interface (HTTPS) for IS
+    environment:
+      XROAD_TOKEN_PIN: 123456xrd!
+      XROAD_ADMIN_USER: xrd
+      XROAD_ADMIN_PASSWORD: secret
+      XROAD_LOG_LEVEL: INFO
+    volumes:
+      - ss2-db-volume:/var/lib/postgresql/16/main
+      - ss2-conf-volume:/etc/xroad
+      - ss2-archive-volume:/var/lib/xroad
+    networks:
+      - xroad-network
+    depends_on:
+      - cs
+      - ca
+
+  # Provider Security Server
+  ss3:
+    image: niis/xroad-security-server-sidecar:7.7.0
+    container_name: ss3
+    ports:
+      - "3000:4000"   # SS3 Admin UI: https://localhost:3000
+      - "3080:8080"   # SS3 Request interface (HTTP) for IS
+      - "3443:8443"   # SS3 Request interface (HTTPS) for IS
+    environment:
+      XROAD_TOKEN_PIN: 123456xrd!
+      XROAD_ADMIN_USER: xrd
+      XROAD_ADMIN_PASSWORD: secret
+      XROAD_LOG_LEVEL: INFO
+    volumes:
+      - ss3-db-volume:/var/lib/postgresql/16/main
+      - ss3-conf-volume:/etc/xroad
+      - ss3-archive-volume:/var/lib/xroad
+    networks:
+      - xroad-network
+    depends_on:
+      - cs
+      - ca
+
+  # -------------------------
+  # provider service (behind ss3)
+  # -------------------------
+  provider-service:
+    build: ./cadastre-rest
+    container_name: provider-service
+    ports:
+      - "9000:9000"
+    networks:
+      - xroad-network
+
+  # -------------------------
+  # Bürokratt / Bükstack side
+  # -------------------------
+  postgres:
+    image: postgres:16
+    container_name: bk-postgres
+    environment:
+      POSTGRES_PASSWORD: pass
+      POSTGRES_USER: bk
+      POSTGRES_DB: bk
+    ports:
+      - "5438:5432"
+    networks:
+      - bknet
+
+  adapter:
+    build: ./adapter
+    container_name: adapter
+    environment:
+      # внутри docker network ss2 доступен по имени ss2 и порту 8080
+      XROAD_SS_URL: http://ss2:8080
+
+      # пример идентификаторов (ты потом синхронизируешь их с тем,
+      # что зарегистрируешь в X-Road)
+      XROAD_CLIENT: DEV/ORG/BKTT/burokratt
+      XROAD_SERVICE: DEV/ORG/CAD/cadastre/getParcel/v1
+    depends_on:
+      - ss2
+      - postgres
+    ports:
+      - "7000:7000"
+    networks:
+      - bknet
+      - xroad-network
+
+  ruuter:
+    image: ruuter
+    container_name: ruuter
+    volumes:
+      - ./dsl:/dsl
+    depends_on:
+      - adapter
+      - postgres
+    ports:
+      - "5000:3000"   # чтобы не конфликтовать с ss3 UI (3000)
+    networks:
+      - bknet
+
+volumes:
+  cs-db-volume:
+    name: cs-db-data
+  cs-conf-volume:
+    name: cs-conf-data
+  ca-volume:
+    name: ca-data
+
+  ss1-db-volume:
+    name: ss1-db-data
+  ss1-conf-volume:
+    name: ss1-conf-data
+  ss1-archive-volume:
+    name: ss1-archive-data
+
+  ss2-db-volume:
+    name: ss2-db-data
+  ss2-conf-volume:
+    name: ss2-conf-data
+  ss2-archive-volume:
+    name: ss2-archive-data
+
+  ss3-db-volume:
+    name: ss3-db-data
+  ss3-conf-volume:
