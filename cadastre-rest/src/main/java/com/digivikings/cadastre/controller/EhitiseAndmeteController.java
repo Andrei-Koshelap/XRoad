@@ -1,9 +1,10 @@
-package com.digivikings.adapter.controller;
+package com.digivikings.cadastre.controller;
 
 
-import com.digivikings.adapter.view.BuildingDto;
-import com.digivikings.adapter.view.EhitiseAndmeteResponse;
-import com.digivikings.adapter.view.SummaryDto;
+
+import com.digivikings.cadastre.view.BuildingDto;
+import com.digivikings.cadastre.view.EhitiseAndmeteResponse;
+import com.digivikings.cadastre.view.SummaryDto;
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;

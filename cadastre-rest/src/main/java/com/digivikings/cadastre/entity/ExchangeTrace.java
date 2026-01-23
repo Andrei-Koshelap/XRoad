@@ -1,4 +1,4 @@
-package com.digivikings.adapter.entity;
+package com.digivikings.cadastre.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;

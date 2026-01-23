@@ -15,7 +15,20 @@ spring:
 server:
   port: 7000
 
+# X-Road connection (for XROAD mode)
 xroad:
-  ss-url: ${XROAD_SS_URL:http://ss2:8080}
+  # Prefer HTTPS interface of Security Server
+  ss-url: ${XROAD_SS_URL:https://ss2:8443}
+
+  # In test env SS uses self-signed certs -> allow turning TLS verification off
+  verify-tls: ${XROAD_VERIFY_TLS:false}
+
   client: ${XROAD_CLIENT:DEV/ORG/BKTT/burokratt}
-  service: ${XROAD_SERVICE:DEV/ORG/CAD/cadastre/getParcel/v1}
+  service: ${XROAD_SERVICE:DEV/ORG/CAD/cadastre/ehitis-andmed/v1}
+
+adapter:
+  # DIRECT = call provider-service directly (works even if X-Road not fully configured)
+  # XROAD  = call via Security Server using X-Road headers
+  mode: ${ADAPTER_MODE:DIRECT}
+
+  provider-base-url: ${PROVIDER_BASE_URL:http://provider-service:9000}

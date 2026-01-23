@@ -1,6 +1,6 @@
-package com.digivikings.adapter.repository;
+package com.digivikings.cadastre.repository;
 
-import com.digivikings.adapter.entity.ExchangeTrace;
+import com.digivikings.cadastre.entity.ExchangeTrace;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

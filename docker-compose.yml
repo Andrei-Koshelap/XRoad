@@ -133,12 +133,14 @@ services:
     build: ./adapter
     container_name: adapter
     environment:
-      XROAD_SS_URL: http://ss2:8080
+      ADAPTER_MODE: DIRECT
+      PROVIDER_BASE_URL: http://provider-service:9000
 
-      # identificator example (need to match exactly with
-      # registered in X-Road)
+      XROAD_SS_URL: https://ss2:8443
+      XROAD_VERIFY_TLS: "false"
+
       XROAD_CLIENT: DEV/ORG/BKTT/burokratt
-      XROAD_SERVICE: DEV/ORG/CAD/cadastre/getParcel/v1
+      XROAD_SERVICE: DEV/ORG/CAD/cadastre/ehitis-andmed/v1
     depends_on:
       - ss2
       - postgres

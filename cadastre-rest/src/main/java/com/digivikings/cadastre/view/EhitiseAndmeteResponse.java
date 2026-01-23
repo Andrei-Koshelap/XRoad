@@ -1,4 +1,4 @@
-package com.digivikings.adapter.view;
+package com.digivikings.cadastre.view;
 
 import java.util.List;
 

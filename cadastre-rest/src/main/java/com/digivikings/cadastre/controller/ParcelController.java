@@ -1,4 +1,4 @@
-package com.digivikings.cadastre;
+package com.digivikings.cadastre.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,7 +11,7 @@ public class ParcelController {
 
     @GetMapping("/parcels/{cadastralId}")
     public ResponseEntity<?> getParcel(@PathVariable String cadastralId) {
-        // demo-ответ (потом заменишь на реальную логику/БД при желании)
+        // demo response
         return ResponseEntity.ok(Map.of(
                 "cadastralId", cadastralId,
                 "area", 1200,
