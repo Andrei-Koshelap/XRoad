@@ -6,20 +6,17 @@ networks:
     name: ruuter
 
 services:
-  # -------------------------
-  # X-Road local test env (NIIS recommended)
-  # -------------------------
   cs:
-    image: niis/xroad-central-server:noble-7.7.0
+    image: niis/xroad-central-server:bionic-6.26.0
     container_name: cs
     environment:
       XROAD_TOKEN_PIN: 123456xrd!
     ports:
-      - "4000:4000"   # UI
-      - "80:80"       # internal/external configuration (HTTP)
-      - "443:443"     # internal/external configuration (HTTPS)
+      - "4000:4000"
+      - "80:80"
+      - "443:443"
     volumes:
-      - cs-db-volume:/var/lib/postgresql/16/main
+      - cs-db-volume:/var/lib/postgresql/12/main
       - cs-conf-volume:/etc/xroad
     networks:
       - xroad-network
@@ -28,7 +25,7 @@ services:
     image: ghcr.io/nordic-institute/xrddev-testca:latest
     container_name: ca
     ports:
-      - "8888:8888"   # Test CA UI: https://localhost:8888/testca/
+      - "8888:8888"
     volumes:
       - ca-volume:/home/ca
     networks:
@@ -36,19 +33,19 @@ services:
 
   # Management Security Server
   ss1:
-    image: niis/xroad-security-server-sidecar:7.7.0
+    image: niis/xroad-security-server-sidecar:6.26.0-fi
     container_name: ss1
     ports:
-      - "1000:4000"   # SS1 Admin UI: https://localhost:1000
-      - "1080:8080"   # SS1 Request interface (HTTP) for IS
-      - "1443:8443"   # SS1 Request interface (HTTPS) for IS
+      - "1000:4000"
+      - "1080:8080"
+      - "1443:8443"
     environment:
       XROAD_TOKEN_PIN: 123456xrd!
       XROAD_ADMIN_USER: xrd
       XROAD_ADMIN_PASSWORD: secret
       XROAD_LOG_LEVEL: INFO
     volumes:
-      - ss1-db-volume:/var/lib/postgresql/16/main
+      - ss1-db-volume:/var/lib/postgresql
       - ss1-conf-volume:/etc/xroad
       - ss1-archive-volume:/var/lib/xroad
     networks:
@@ -57,21 +54,20 @@ services:
       - cs
       - ca
 
-  # Consumer Security Server
   ss2:
-    image: niis/xroad-security-server-sidecar:7.7.0
+    image: niis/xroad-security-server-sidecar:6.26.0-fi
     container_name: ss2
     ports:
-      - "2000:4000"   # SS2 Admin UI: https://localhost:2000
-      - "2080:8080"   # SS2 Request interface (HTTP) for IS
-      - "2443:8443"   # SS2 Request interface (HTTPS) for IS
+      - "2000:4000"
+      - "2080:8080"
+      - "2443:8443"
     environment:
       XROAD_TOKEN_PIN: 123456xrd!
       XROAD_ADMIN_USER: xrd
       XROAD_ADMIN_PASSWORD: secret
       XROAD_LOG_LEVEL: INFO
     volumes:
-      - ss2-db-volume:/var/lib/postgresql/16/main
+      - ss2-db-volume:/var/lib/postgresql
       - ss2-conf-volume:/etc/xroad
       - ss2-archive-volume:/var/lib/xroad
     networks:
@@ -80,21 +76,20 @@ services:
       - cs
       - ca
 
-  # Provider Security Server
   ss3:
-    image: niis/xroad-security-server-sidecar:7.7.0
+    image: niis/xroad-security-server-sidecar:6.26.0-fi
     container_name: ss3
     ports:
-      - "3000:4000"   # SS3 Admin UI: https://localhost:3000
-      - "3080:8080"   # SS3 Request interface (HTTP) for IS
-      - "3443:8443"   # SS3 Request interface (HTTPS) for IS
+      - "3000:4000"
+      - "3080:8080"
+      - "3443:8443"
     environment:
       XROAD_TOKEN_PIN: 123456xrd!
       XROAD_ADMIN_USER: xrd
       XROAD_ADMIN_PASSWORD: secret
       XROAD_LOG_LEVEL: INFO
     volumes:
-      - ss3-db-volume:/var/lib/postgresql/16/main
+      - ss3-db-volume:/var/lib/postgresql
       - ss3-conf-volume:/etc/xroad
       - ss3-archive-volume:/var/lib/xroad
     networks:
@@ -103,9 +98,6 @@ services:
       - cs
       - ca
 
-  # -------------------------
-  # provider service (behind ss3)
-  # -------------------------
   provider-service:
     build: ./cadastre-rest
     container_name: provider-service
@@ -114,9 +106,6 @@ services:
     networks:
       - xroad-network
 
-  # -------------------------
-  # Bürokratt / Bükstack side
-  # -------------------------
   postgres:
     image: postgres:16
     container_name: bk-postgres
@@ -135,10 +124,8 @@ services:
     environment:
       ADAPTER_MODE: DIRECT
       PROVIDER_BASE_URL: http://provider-service:9000
-
       XROAD_SS_URL: https://ss2:8443
       XROAD_VERIFY_TLS: "false"
-
       XROAD_CLIENT: DEV/ORG/BKTT/burokratt
       XROAD_SERVICE: DEV/ORG/CAD/cadastre/ehitis-andmed/v1
     depends_on:
@@ -159,7 +146,7 @@ services:
       - adapter
       - postgres
     ports:
-      - "5000:3000"   #  ss3 UI (3000)
+      - "5000:3000"
     networks:
       - bknet
 
