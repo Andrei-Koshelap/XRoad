@@ -178,14 +178,14 @@ Receives the response and sends it back
 
 How it all looks together (verbal diagram)
 [Client App / Adapter]
-|
-v
+        |
+        v
 [SS Consumer]  <-- access check, signing, encryption
-|
-v
+        |
+        v
 [SS Provider]  <-- signature and timestamp verification
-|
-v
+        |
+        v
 [REST / SOAP Business Service]
 
 

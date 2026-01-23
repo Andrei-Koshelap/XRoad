@@ -21,7 +21,7 @@ public class CadastreAdapterController {
     public CadastreAdapterController(
             WebClient webClient,
             @Value("${adapter.mode}") String mode,
-            @Value("${adapter.providerBaseUrl}") String providerBaseUrl
+            @Value("${adapter.provider-base-url}") String providerBaseUrl
     ) {
         this.webClient = webClient;
         this.mode = mode;
