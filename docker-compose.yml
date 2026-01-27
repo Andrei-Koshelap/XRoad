@@ -18,6 +18,8 @@ services:
       - "4000:4000"   # UI
       - "80:80"       # internal/external configuration (HTTP)
       - "443:443"     # internal/external configuration (HTTPS)
+      - "4001:4001"   # internal/external configuration (HTTP management interface)
+      - "4002:4002"  # internal/external configuration(HTTPS management interface)
     volumes:
       - cs-db-volume:/var/lib/postgresql/16/main
       - cs-conf-volume:/etc/xroad
@@ -110,7 +112,7 @@ services:
     build: ./cadastre-rest
     container_name: provider-service
     ports:
-      - "9000:9000"
+      - "9000:8080"
     networks:
       - xroad-network
 
