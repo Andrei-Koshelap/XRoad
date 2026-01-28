@@ -7,7 +7,7 @@ networks:
 
 services:
   # -------------------------
-  # X-Road local test env (NIIS recommended)
+  # X-Road local test env
   # -------------------------
   cs:
     image: niis/xroad-central-server:noble-7.7.0
@@ -106,7 +106,7 @@ services:
       - ca
 
   # -------------------------
-  # provider service (behind ss3)
+  # provider service
   # -------------------------
   provider-service:
     build: ./cadastre-rest
@@ -135,7 +135,7 @@ services:
     build: ./adapter
     container_name: adapter
     environment:
-      ADAPTER_MODE: DIRECT
+      ADAPTER_MODE: XROAD
       PROVIDER_BASE_URL: http://provider-service:9000
 
       XROAD_SS_URL: https://ss2:8443
@@ -156,12 +156,12 @@ services:
     build: ./Ruuter
     container_name: ruuter
     volumes:
-      - ./dsl:/dsl
+      - ./dsl:/DSL
     depends_on:
       - adapter
       - postgres
     ports:
-      - "5000:3000"   #  ss3 UI (3000)
+      - "5000:8080"
     networks:
       - bknet
 

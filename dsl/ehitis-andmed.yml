@@ -1,0 +1,48 @@
+declaration:
+  call: declare
+  version: 0.1
+  description: "CADASTRE: get ehitise andmed by cadastral number (via adapter)"
+  method: get
+  accepts: json
+  returns: json
+  namespace: cadastre
+  allowlist:
+    query:
+      - field: cadastralId
+        type: string
+        description: "Cadastral number, e.g. 11235:..."
+      - field: dataVector
+        type: string
+        description: "Optional data vector"
+        default: "101110010100"
+
+extractRequestData:
+  assign:
+    cadastralId: ${incoming.query.cadastralId}
+    dataVector: ${incoming.query.dataVector || "101110010100"}
+    requestedAt: ${new Date().toISOString()}
+
+callAdapter:
+  call: http.get
+  args:
+    url: "http://adapter:7000/api/cadastre/ehitis-andmed"
+    query:
+      cadastralId: ${cadastralId}
+      dataVector: ${dataVector}
+  result: adapterResult
+  next: mapUnifiedResponse
+
+mapUnifiedResponse:
+  assign:
+    unified:
+      status: "OK"
+      source: "CADASTRE"
+      meta:
+        requestedAt: ${requestedAt}
+        cadastralId: ${cadastralId}
+      data: ${adapterResult.response.body}
+  next: returnSuccess
+
+returnSuccess:
+  return: ${unified}
+  next: end

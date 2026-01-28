@@ -1,79 +1,219 @@
 # XRoad Cadastre Module
-This repository contains the XRoad Cadastre Module, which provides an interface for accessing cadastre data through X-Road services.
+
+This repository contains the **XRoad Cadastre Module**, which provides an interface for accessing cadastre (land registry) data through **X-Road services**.
+
+---
+
 ## Overview
-The XRoad Cadastre Module is designed to facilitate secure and efficient access to cadastre information.
-It leverages the X-Road framework to ensure interoperability and security in data exchange.
+
+The XRoad Cadastre Module is designed to facilitate **secure, standardized, and traceable** access to cadastral information.  
+It leverages the **X-Road framework** to ensure interoperability, message integrity, encryption, and auditability across organizational boundaries.
+
+The module follows **Bükstack DSL architectural principles**, clearly separating:
+- service contracts
+- orchestration logic
+- transport and security concerns
+
+---
+
 ## Components
-- **Cadastre Service Interface**: Defines the operations and data structures for accessing cadastre data
-- **Ruuter Orchestration**: Manages the flow of data and service calls within the X-Road ecosystem
-- **Data Models**: Represents the cadastre data in a structured format
-- **Security**: Implements authentication and authorization mechanisms to protect sensitive data
 
-X-Road is not “a single server” but a trusted network where each participant manages its own node, all messages are signed, encrypted, and logged, and trust is established through a central configuration rather than direct agreements between services. That’s why containers are used.
+- **Cadastre Service Interface**  
+  Defines operations and data structures for accessing cadastral data.
 
-1️⃣ xroad-central — 🧠 The central brain of the network
-What it is:
-Central Server (CS) - Does NOT participate in real requests
-Not a proxy and not a router
-What it’s for:
-Stores:
-- **list of members
-- **subsystems
-- **available services
-- **certificates and keys
+- **Ruuter Orchestration**  
+  Manages request flow, routing, and policies within the X-Road ecosystem using DSL.
 
-Generates the Global Configuration
-Signs it with a signing key
-Distributes it to all Security Servers
-Key idea for the defense:
+- **Data Models**  
+  Structured representations of cadastral data.
 
-The Central Server is a single source of trust, but not a single point of data exchange.
+- **Security**  
+  Authentication, authorization, message signing, and encryption based on X-Road standards.
 
-2️⃣ xroad-ca — 🏛️ Certificate Authority (test)
-What it is:
-Test Certificate Authority
-Used only in dev/test environments
+---
 
-3️⃣ xroad-ocsp — 🔍 Certificate revocation check
-What it is:
-OCSP responder
-This is an online check (OCSP)
+## X-Road Architecture Context
 
-4️⃣ xroad-tsa — ⏱️ Time Stamping Authority
-What it is:
-Time-stamping server
+X-Road is **not a single server**, but a **trusted distributed network** where:
+- each participant operates its own node
+- all messages are **signed, encrypted, and logged**
+- trust is established via **central configuration**, not point-to-point agreements
 
-5️⃣ xroad-ss-consumer — 🚪 Consumer Security Server
-What it is:
-Security Server (SS)
+This is why the prototype uses **containerized X-Road components**.
 
-6️⃣ xroad-ss-provider — 🏠 Provider Security Server
-What it is:
-Security Server
+---
 
-How it all looks together (verbal diagram)
-[Client App / Adapter]
-        |
-        v
-[SS Consumer]  <-- access check, signing, encryption
-        |
-        v
-[SS Provider]  <-- signature and timestamp verification
-        |
-        v
-[REST / SOAP Business Service]
+## X-Road Infrastructure Components
 
+### 1. xroad-central — Central Server (CS)
 
-And constantly in the background:
+**What it is:**
+- Central Server (CS)
 
-CS → distributes configuration
+**Responsibilities:**
+- Maintains:
+        - list of members
+        - subsystems
+        - available services
+        - certificates and keys
+- Generates **Global Configuration**
+- Signs configuration and distributes it to all Security Servers
 
-CA → issues certificates
+**Key principle:**
 
-OCSP → checks certificates
+> The Central Server is a single source of trust, but not a single point of data exchange.
 
-TSA → applies timestamps
+---
 
+### 2. xroad-ca — Certificate Authority (Test)
 
-DSL in cadastre module describes the service interface and data contract, while Ruuter DSL describes orchestration logic.
-These concerns are intentionally separated.
+- Test Certificate Authority
+---
+
+### 3. xroad-ocsp — Certificate Revocation Check
+
+- OCSP responder
+---
+
+### 4. xroad-tsa — Time Stamping Authority
+
+- Provides trusted timestamps for signed messages
+---
+
+### 5. xroad-ss-consumer — Consumer Security Server
+
+- X-Road Security Server on the **consumer** side
+- Performs:
+        - access control
+        - message signing
+        - encryption (mTLS)
+---
+
+### 6. xroad-ss-provider — Provider Security Server
+
+- X-Road Security Server on the **provider** side
+- Performs:
+        - signature validation
+        - timestamp verification
+        - forwarding to business service
+---
+
+## Prototype Execution Flow (Cadastre via X-Road)
+
+The following diagram illustrates how the **XRoad Cadastre Module prototype** operates end-to-end.
+
+```text
+
++--------------------------+
+|        Ruuter             |
+|  Orchestration Layer      |
+|  - DSL-based routing      |
+|  - Policy checks          |
+|  - Correlation ID         |
++-------------+------------+
+              |
+              | Internal REST call
+              v
++--------------------------+
+|  XRoad Cadastre Adapter  |
+|  - DSL service interface |
+|  - Request mapping       |
+|  - Response normalization|
++-------------+------------+
+              |
+              | X-Road REST request
+              v
++--------------------------+
+|  X-Road Security Server  |
+|       (Consumer)         |
+|  - Access control        |
+|  - Message signing       |
+|  - Encryption (mTLS)     |
++-------------+------------+
+              |
+              | Signed & encrypted message
+              v
++--------------------------+
+|  X-Road Security Server  |
+|       (Provider)         |
+|  - Signature validation  |
+|  - Timestamp verification|
++-------------+------------+
+              |
+              | Local REST / SOAP call
+              v
++--------------------------+
+|   Cadastre Information   |
+|        System            |
+|  - Business logic        |
+|  - Data source           |
++--------------------------+
+
+```
+
+## Responsibilities
+
+### Central Server (CS)
+- Distributes **signed global configuration** to all X-Road Security Servers.
+
+### Certificate Authority (CA)
+- Issues certificates used by X-Road members and Security Servers.
+
+### OCSP
+- Validates certificate revocation status.
+
+### Time Stamping Authority (TSA)
+- Provides trusted timestamps for signed messages.
+
+---
+
+## Step-by-step Flow Description
+
+1. The **user** initiates a request via **Bürokratt UI**.
+2. **TIM** authenticates the user and establishes a session.
+3. **Ruuter**:
+   - validates the JWT
+   - applies orchestration rules defined in **Ruuter DSL**
+   - assigns correlation identifiers for traceability
+4. **XRoad Cadastre Adapter**:
+   - implements the cadastre service contract defined in DSL
+   - transforms the request into an **X-Road–compatible REST call**
+5. **X-Road Security Server (Consumer)**:
+   - checks access rights
+   - signs the message
+   - encrypts communication using **mTLS**
+6. **X-Road Security Server (Provider)**:
+   - verifies the signature and timestamp
+   - forwards the request to the cadastre service
+7. **Cadastre Information System** processes the request and returns the response.
+8. The adapter normalizes the response into a **unified response format** before returning it to Bürokratt.
+
+---
+
+## Relation to DSL Architecture
+
+### Cadastre Module DSL
+- Defines service interfaces
+- Specifies input/output data contracts
+- Is **transport-agnostic** (REST / SOAP)
+
+### Ruuter DSL
+- Defines orchestration logic
+- Controls routing and policies
+- Contains **no business or X-Road–specific logic**
+
+### This separation ensures:
+- clear responsibilities
+- easier testing
+- protocol independence
+- compliance with **Bükstack architectural principles**
+
+---
+
+## Key Architectural Principles
+
+- Full compliance with **X-Road standards**
+- Secure, signed, and encrypted message exchange
+- Clear traceability (**from whom → to whom**)
+- Separation of orchestration and integration concerns
+- Reproducible, containerized prototype
