@@ -1,48 +1,68 @@
 declaration:
   call: declare
   version: 0.1
-  description: "CADASTRE: get ehitise andmed by cadastral number (via adapter)"
-  method: get
+  description: "CADASTRE/EHR: ehitiseAndmeteParing v1 via X-Road adapter"
+  method: post
   accepts: json
   returns: json
   namespace: cadastre
   allowlist:
-    query:
+    body:
       - field: cadastralId
         type: string
-        description: "Cadastral number, e.g. 11235:..."
+        description: "katastritunnus, e.g. 11235:..."
       - field: dataVector
         type: string
-        description: "Optional data vector"
+        description: "Optional andmevektor"
         default: "101110010100"
 
 extractRequestData:
   assign:
-    cadastralId: ${incoming.query.cadastralId}
-    dataVector: ${incoming.query.dataVector || "101110010100"}
+    cadastralId: ${incoming.body.cadastralId}
+    dataVector: ${incoming.body.dataVector || "101110010100"}
     requestedAt: ${new Date().toISOString()}
+    correlationId: ${incoming.headers["x-correlation-id"] || incoming.headers["X-Correlation-Id"] || (new Date().getTime() + "-" + Math.random())}
 
 callAdapter:
-  call: http.get
+  call: http.post
   args:
-    url: "http://adapter:7000/api/cadastre/ehitis-andmed"
-    query:
+    url: "http://adapter:7000/api/xroad/ehr/ehitiseAndmeteParing/v1"
+    headers:
+      x-correlation-id: ${correlationId}
+    body:
       cadastralId: ${cadastralId}
       dataVector: ${dataVector}
+      correlationId: ${correlationId}
   result: adapterResult
+  next: computeStatus
+
+computeStatus:
+  assign:
+    httpStatus: ${adapterResult.response.statusCode}
+    isOk: ${httpStatus >= 200 && httpStatus < 300}
+    statusText: '${isOk ? "OK" : "ERROR"}'
   next: mapUnifiedResponse
 
 mapUnifiedResponse:
   assign:
     unified:
-      status: "OK"
-      source: "CADASTRE"
+      status: ${statusText}
+      source: "EHR_XROAD"
       meta:
         requestedAt: ${requestedAt}
-        cadastralId: ${cadastralId}
-      data: ${adapterResult.response.body}
-  next: returnSuccess
+        correlationId: ${correlationId}
+        httpStatus: ${httpStatus}
+        xroadService:
+          serviceCode: "ehitiseAndmeteParing"
+          version: "v1"
+      data: '${isOk ? adapterResult.response.body : null}'
+      error: '${isOk ? null : {
+        code: "XROAD_ADAPTER_ERROR",
+        message: adapterResult.response.body?.message || "X-Road adapter returned error",
+        details: adapterResult.response.body
+      }}'
+  next: returnUnified
 
-returnSuccess:
+returnUnified:
   return: ${unified}
   next: end
