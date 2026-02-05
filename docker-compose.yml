@@ -106,17 +106,6 @@ services:
       - ca
 
   # -------------------------
-  # provider service
-  # -------------------------
-  provider-service:
-    build: ./cadastre-rest
-    container_name: provider-service
-    ports:
-      - "9000:8080"
-    networks:
-      - xroad-network
-
-  # -------------------------
   # Bürokratt / Bükstack side
   # -------------------------
   postgres:

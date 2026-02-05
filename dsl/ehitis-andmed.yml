@@ -22,6 +22,7 @@ extractRequestData:
     dataVector: ${incoming.body.dataVector || "101110010100"}
     requestedAt: ${new Date().toISOString()}
     correlationId: ${incoming.headers["x-correlation-id"] || incoming.headers["X-Correlation-Id"] || (new Date().getTime() + "-" + Math.random())}
+  next: callAdapter
 
 callAdapter:
   call: http.post
@@ -38,9 +39,24 @@ callAdapter:
 
 computeStatus:
   assign:
-    httpStatus: ${adapterResult.response.statusCode}
-    isOk: ${httpStatus >= 200 && httpStatus < 300}
-    statusText: '${isOk ? "OK" : "ERROR"}'
+    httpStatus: ${adapterResult}
+    isOk: "true"
+  next: computeStatusText
+
+computeStatusText:
+  switch:
+    - condition: ${isOk}
+      next: setStatusOk
+  next: setStatusError
+
+setStatusOk:
+  assign:
+    statusText: "OK"
+  next: mapUnifiedResponse
+
+setStatusError:
+  assign:
+    statusText: "ERROR"
   next: mapUnifiedResponse
 
 mapUnifiedResponse:
@@ -55,12 +71,45 @@ mapUnifiedResponse:
         xroadService:
           serviceCode: "ehitiseAndmeteParing"
           version: "v1"
-      data: '${isOk ? adapterResult.response.body : null}'
-      error: '${isOk ? null : {
-        code: "XROAD_ADAPTER_ERROR",
-        message: adapterResult.response.body?.message || "X-Road adapter returned error",
-        details: adapterResult.response.body
-      }}'
+  next: mapUnifiedPayload
+
+mapUnifiedPayload:
+  switch:
+    - condition: ${isOk}
+      next: setUnifiedSuccessPayload
+  next: setUnifiedErrorPayload
+
+setUnifiedSuccessPayload:
+  assign:
+    unified:
+      data: ${adapterResult.response.body}
+      error: null
+  next: returnUnified
+
+setUnifiedErrorPayload:
+  switch:
+    - condition: ${adapterResult.response && adapterResult.response.body}
+      next: setUnifiedErrorPayloadWithBody
+  next: setUnifiedErrorPayloadNoBody
+
+setUnifiedErrorPayloadWithBody:
+  assign:
+    unified:
+      data: null
+      error:
+        code: "XROAD_ADAPTER_ERROR"
+        message: ${adapterResult.response.body.message || "X-Road adapter returned error"}
+        details: ${adapterResult.response.body}
+  next: returnUnified
+
+setUnifiedErrorPayloadNoBody:
+  assign:
+    unified:
+      data: null
+      error:
+        code: "XROAD_ADAPTER_ERROR"
+        message: "X-Road adapter returned error (no body)"
+        details: "N/A"
   next: returnUnified
 
 returnUnified:
